@@ -72,6 +72,37 @@
       <div class="row">
         <div class="col-lg-8 mx-auto">
           <h2>Projects</h2>
+          <h3>Reinforcement Learning Project</h3>
+          <p class="lead">Behavioural science draws conclusions through the results of behavioural observations. In particular, it is trying to predict animal's internal states and processes based on indirect measurements and/or observations of the animal's behaviour. Cognitive science endeavors for years on revealing the content of the black box, as revealing the inner workings between input (stimuli) and output (response).
+
+The aim of our project was an implementation of a framework with models that imitate animal's behaviour and to evaluate, which model fits best animal's behaviour. This allows us to reveal the inner workings on the basis of very simple observations. The evaluation framework is composed of two components: models and evaluation. The framework's input are data, that describe a simple animal's behaviour in a form of trajectories in space and time. Models are  fitted to the data, which in term generates new trajectories with fitted parameters. A newly generated trajectory is compared with an original one and an evaluation method returns an information about which model  fits better to the inputs. The selected model reveals an underlying inner structure.</p>
+          <h4>Implementation</h4>
+          <p class="lead">The framework was implemented on a basis of a pilot study.
+The design of the framework consists of two parts, divided into subparts:</p>
+          <ul>
+            <li>simulation framework
+              <ul>
+                <li>environment</li>
+                <li>agent</li>
+              </ul>
+            </li>
+            <li>agent's learning process
+              <ul>
+                <li>evaluation</li>
+                <li>reconstruction</li>
+              </ul>
+            </li>
+          </ul>
+          <h5>Simulation framework</h5>
+          <p class="lead">To implement simulation we use Markov Decision Process theory, which represents agent's internal states, beliefs and desires, its planning process and its interaction with the environment and encodes environment's limits (see Appendix A).
+
+To train an agent to imitate animals behaviour we used reinforcement learning. RL is a computational approach, that addresses the problem of how agents should learn to take actions to maximize cumulative reward through interactions with an environment (see Appendix B).</p>
+          <h5>Models</h5>
+          <p class="lead">Each model stands for every hypothesis. A model describes a trajectory in terms of differential equations using x, y positions, x, y velocities, angle, angular velocity and position of an object on agent's retina at each time point.
+
+Three different models were implemented. A model that describes an animal approaching a goal, an animal that is avoiding an obstacle and reflexive & goal oriented model as a combination of first two. A code snippet can be found in an Appendix C.</p>
+          <h5>Evaluation</h5>
+          <p class="lead">Training is guided through cumulative reward, which is a good metric to evaluate models.</p>
         </div>
       </div>
     </div>
