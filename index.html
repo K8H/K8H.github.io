@@ -70,7 +70,7 @@
     </div>
   </section>
 
-  <section id=“rl_project” class="bg-light">
+  <section id="rl_project" class="bg-light">
     <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto">
@@ -96,7 +96,7 @@ The design of the framework consists of two parts, divided into subparts:</p>
             </li>
           </ul>
           <h4>Simulation framework</h4>
-          <p class="lead">To implement simulation we use Markov Decision Process theory, which represents agent's internal states, beliefs and desires, its planning process and its interaction with the environment and encodes environment's limits (see Appendix A).</p>
+          <p class="lead">To implement simulation we use Markov Decision Process theory, which represents agent's internal states, beliefs and desires, its planning process and its interaction with the environment and encodes environment's limits.</p>
           <pre>
             <code> 
 def simulate (self, 
@@ -106,13 +106,166 @@ def simulate (self,
                                  x_vel=x_vel0, y_vel=y_vel0,
                                  angular_vel=angular_vel0,
                                  heading=heading0))]
+        # Run n steps
+        for _ in range(n):
+            # noinspection PyArgumentList
+            states.append(self.next(**states[-1]))
+
+        # Return a dataframe with all the observations, indexed by time [sec]
+        return pd.DataFrame(states, index=np.arange(n + 1) * self.dt)
             </code>
           </pre>
-          <p class="lead">To train an agent to imitate animals behaviour we used reinforcement learning. RL is a computational approach, that addresses the problem of how agents should learn to take actions to maximize cumulative reward through interactions with an environment (see Appendix B).</p>
-          <h4>Models</h4>
-          <p class="lead">Each model stands for every hypothesis. A model describes a trajectory in terms of differential equations using x, y positions, x, y velocities, angle, angular velocity and position of an object on agent's retina at each time point.
+          <p class="lead">To train an agent to imitate animals behaviour we used reinforcement learning. RL is a computational approach, that addresses the problem of how agents should learn to take actions to maximize cumulative reward through interactions with an environment.</p>
+          <pre>
+            <code>
+def fit(self, model_type):
+        """
+        Initializes TRPO (trust region policy optimization) algorithm and uses
+        it to train the model, determined with model_type. After the training,
+        the iteration that collected the best cumulative reward. A policy of 
+        the iteration is saved to a blobal variable and the associated 
+        trajectory saved to pickle file.
+        
+        Parameters
+        ----------
+        model_type : string
+            name of a model, that is to be fit to the ground truth trajectories.
+            Valid types are:
+            - 'object_approaching_model'
+            - 'object_avoidance_model'
+            - 'reflexive_goal_oriented_model'
+            
+        Returns
+        -------
+        float
+            cumulative reward, collected at the best iteration
+        """
+        episode_provider = Episodes(ground_truth_model=self.ground_truth_model,
+                                    fitting_model=fitting_model,
+                            initial_observations=self.train_initial_observations,
+                                    snapshot_dir=self.directory,
+                                    train=True)
 
-Three different models were implemented. A model that describes an animal approaching a goal, an animal that is avoiding an obstacle and reflexive & goal oriented model as a combination of first two. A code snippet can be found in an Appendix C.</p>
+        env = TrajectoryImitationEnv(episode_provider=episode_provider,
+                                     one_step_forecast=False)
+        self.norm_env = normalize(env, normalize_reward=True)
+
+        # creates an agent
+        policy = GaussianMLPPolicy(env_spec=self.norm_env.spec,
+                                   hidden_sizes=self.network_setup)
+
+        baseline = LinearFeatureBaseline(env_spec=self.norm_env.spec)
+        self.algo = TRPO(
+            env=self.norm_env,
+            policy=policy,
+            baseline=baseline,
+            n_itr=NUMBER_OF_ITERATIONS,
+            store_paths=True,
+            discount=self.discount_factor,
+            n_samples=int(round(self.number_of_data * 0.66)),
+            batch_size=int(round(self.number_of_data * 0.66)) 
+                           * self.max_path_length,
+            max_path_length=self.max_path_length
+        )
+        self.algo.train()
+
+        iteration_data_dict = joblib.load(op.join(self.model_directory,
+                                                  ('itr_%s.pkl' 
+                                                  % (NUMBER_OF_ITERATIONS - 1))))
+
+        cumulative_reward = self.get_cumulative_reward(iteration_data_dict)
+        self.policy = iteration_data_dict['policy']
+        [self.log_reconstructed_trajectory(path, index) for index, path in
+         enumerate(iteration_data_dict['paths'])]
+        return cumulative_reward
+            </code>
+          </pre> 
+          <h4>Models</h4>
+          <p class="lead">Each model stands for every hypothesis. A model describes a trajectory in terms of differential equations using x, y positions, x, y velocities, angle, angular velocity and position of an object on agent's retina at each time point.</p>
+          <p class="lead">Three different models were implemented. A model that describes an animal approaching a goal, an animal that is avoiding an obstacle and reflexive & goal oriented model as a combination of first two. A code snippet can be found in an Appendix C.</p>
+          <pre>
+            <code>
+def next(self, x, y, x_vel, y_vel, heading, angular_vel, **_):
+        """
+        Method generates a next observation, based on given values, a previous 
+        observation. For a calculation is using semi differential equations.
+
+        An angle between an agent heading and an object's direction dictates 
+        the torque, which is multiplied by a scalar value, called gain.
+
+        Parameters
+        ----------
+        x : float
+            x position of previous observation            [m]
+        y : float
+            y position of previous observation            [m]
+        x_vel : float
+            velocity along x axis of previous observation [m/s]
+        y_vel : float
+            velocity along y axis of previous observation [m/s]
+        heading : float
+            angle in which an agent is moving of prev observation, 
+            in range [o, 2 * pi]                          [rad]
+        angular_vel : float
+            angular velocity of previous observation      [rad/s]
+
+        Returns
+        -------
+        pd.Series
+            the calculated next observation
+        """
+        # --- Avoid selfishness
+        dt = self.dt  # s
+        mass = self.mass  # kg
+        object_x, object_y = self.object_location  # m
+        gain = self.gain  # N * m / rad
+        rot_inertia = self.rot_inertia  # kg * m^2
+        rot_damping = self.rot_damping  # unitless
+        force_forward = self.force_forward  # N
+        air_drag = self.air_drag  # unitless
+        # force_lateral = self.force_lateral  # N
+
+        # Rotational force due to attraction/repulsion towards object
+        agent_object_angle = math.atan2(object_y - y, object_x - x)
+        position_retina = wrap_pi_pi(agent_object_angle - heading)  
+        torque = gain * position_retina  # N * m
+
+        angular_velocity_new = angular_vel + dt / rot_inertia 
+                               * (- rot_damping * angular_vel + torque)
+
+        heading_new = heading + angular_vel * dt
+
+        # Velocities
+        x_vel_new = x_vel + dt / mass * (- air_drag * x_vel + force_forward 
+                                         * math.cos(heading))
+        y_vel_new = y_vel + dt / mass * (- air_drag * y_vel + force_forward
+                                         * math.sin(heading))
+
+        # Positions
+        x_new = x + x_vel * dt
+        y_new = y + y_vel * dt
+
+        # Result dictionary (or named tuple or...)
+        new_state = {
+            'x': x_new, 'y': y_new,
+            'x_vel': x_vel_new, 'y_vel': y_vel_new,
+            'heading': heading_new,
+            'angular_vel': angular_velocity_new,
+        }
+
+        if self.debug:
+            new_state.update({
+                'dist_to_object': math.sqrt((object_y - y) ** 2 
+                                             + (object_x - x) ** 2),
+                'agent_object_angle': agent_object_angle,
+                'position_retina': position_retina,
+                'torque': torque,
+                'gain': gain,
+            })
+
+        return pd.Series(new_state)
+            </code>
+          </pre>
           <h5>Evaluation</h5>
           <p class="lead">Training is guided through cumulative reward, which is a good metric to evaluate models.</p>
         </div>
@@ -120,7 +273,7 @@ Three different models were implemented. A model that describes an animal approa
     </div>
   </section>
 
-  <section id=“autoencoder”>
+  <section id="autoencoder">
     <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto">
@@ -131,7 +284,27 @@ Three different models were implemented. A model that describes an animal approa
           <h4>LSTM Autoencoder</h4>
           <p class="lead">Autoencoder consist of two parts: an encoder and a decoder. Once fit the encoder compresses the data, whereas the decoder reconstructs an original signal. The general idea of autoencoder is that the model is trained only on non-anomalous data, therefore a compression and a reconstruction of an original signal of anomalous data will result in bigger reconstruction error.
 
-A Figure 1 shows reconstruction error for anomalous and non-anomalous data. As expected such model gives positive results (see Figure 2). An example of a model implementation can be found in an Appendix D.</p>
+A Figure 1 shows reconstruction error for anomalous and non-anomalous data. As expected such model gives positive results (see Figure 2). An example of a model implementation:</p>
+          <pre>
+            <code>
+@property
+def model(self):
+    inp_e = Input((20, 800))  # here, you don't define the batch size
+    out_e = LSTM(units=80, return_sequences=False)(inp_e)
+
+    encoder = Model(inp_e, out_e)
+
+    inp_d = Input((80,))
+    out_d = Reshape((20, 4))(inp_d)  # supposing 20 steps of 4 elements
+    out_d1 = LSTM(800, return_sequences=True)(out_d)  
+
+    decoder = Model(inp_d, out_d1)
+
+    model = Model(encoder.inputs, decoder(encoder(encoder.inputs)))
+
+    return model
+            </code>
+          </pre>
         </div>
       </div>
     </div>
