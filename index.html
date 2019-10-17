@@ -99,6 +99,7 @@ The design of the framework consists of two parts, divided into subparts:</p>
           <p class="lead">To implement simulation we use Markov Decision Process theory, which represents agent's internal states, beliefs and desires, its planning process and its interaction with the environment and encodes environment's limits.</p>
           <pre>
             <code> 
+              <small>
 def simulate (self, 
               n=1000,              x0=0, y0=0, x_vel0=0, y_vel0=0, angular_vel0=0, heading0=0,              **_):
         # The first state will be the original state
@@ -113,6 +114,7 @@ def simulate (self,
 
         # Return a dataframe with all the observations, indexed by time [sec]
         return pd.DataFrame(states, index=np.arange(n + 1) * self.dt)
+              </small>
             </code>
           </pre>
           <p class="lead">To train an agent to imitate animals behaviour we used reinforcement learning. RL is a computational approach, that addresses the problem of how agents should learn to take actions to maximize cumulative reward through interactions with an environment.</p>
