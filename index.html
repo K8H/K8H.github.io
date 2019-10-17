@@ -76,7 +76,7 @@
         <div class="col-lg-8 mx-auto">
           <h2>Reinforcement Learning Project</h2>
           <p class="lead">Behavioural science draws conclusions through the results of behavioural observations. In particular, it is trying to predict animal's internal states and processes based on indirect measurements and/or observations of the animal's behaviour. Cognitive science endeavors for years on revealing the content of the black box, as revealing the inner workings between input (stimuli) and output (response).</p>
-          <p class="lead">The aim of our project was an implementation of a framework with models that imitate animal's behaviour and to evaluate, which model fits best animal's behaviour. This allows us to reveal the inner workings on the basis of very simple observations. The evaluation framework is composed of two components: models and evaluation. The framework's input are data, that describe a simple animal's behaviour in a form of trajectories in space and time. Models are  fitted to the data, which in term generates new trajectories with fitted parameters. A newly generated trajectory is compared with an original one and an evaluation method returns an information about which model  fits better to the inputs. The selected model reveals an underlying inner structure.</p>
+          <p class="lead">The aim of our project was an implementation of a framework with models that imitate animal's behaviour and to evaluate, which model fits best animal's behaviour. This allows us to reveal the inner workings on the basis of very simple observations. The evaluation framework is composed of two components: models and evaluation. The framework's input are data, that describe a simple animal's behaviour in a form of trajectories in space and time. Models are fitted to the data, which in term generates new trajectories with fitted parameters. A newly generated trajectory is compared with an original one and an evaluation method returns an information about which model fits better to the inputs. The selected model reveals an underlying inner structure.</p>
           <h3>Implementation</h3>
           <p class="lead">The framework was implemented on a basis of a pilot study.
 The design of the framework consists of two parts, divided into subparts:</p>
@@ -278,13 +278,6 @@ def next(self, x, y, x_vel, y_vel, heading, angular_vel, **_):
           <p class="lead">Each system gets calibrated for every type of a car. During calibration phase we collected signals and converted them into audio files. The data got preprocess and fit to a model. In production phase the data get stored in a cloud where a pretrained model is used for classification.</p>
           <h4>LSTM Autoencoder</h4>
           <p class="lead">Autoencoder consist of two parts: an encoder and a decoder. Once fit the encoder compresses the data, whereas the decoder reconstructs an original signal. The general idea of autoencoder is that the model is trained only on non-anomalous data, therefore a compression and a reconstruction of an original signal of anomalous data will result in bigger reconstruction error.</p>
-          <p class="lead">Next figure demonstrates a reconstruction error for anomalous and non-anomalous data. As expected such model gives positive results (see 2nd figure).</p>
-          <figure>
-            <img src="reconstruction_error.png" alt="A figure demonstrates that a model was trained sufficiently well, that a threshold value could be set properly to separate classes based on reconstruction error." width="304" height="228">
-          </figure>
-          <figure>
-            <img src=“roc_curve.png" alt="A figure plots ROC curve with AUC of 96,15 \%." width="304" height="228">
-          </figure>
           <p class="lead">An example of a model implementation:</p>
           <pre>
             <code>
@@ -308,6 +301,15 @@ def model(self):
               </small>
             </code>
           </pre> 
+          <h3>Results</h3>
+          <p class="lead">Next figure demonstrates a reconstruction error for anomalous and non-anomalous data. As expected such model gives positive results (see 2nd figure).</p>
+          <figure>
+            <img src="reconstruction_error.png" alt="A figure demonstrates that a model was trained sufficiently well and that a threshold value could be set properly to separate classes based on reconstruction error." width="304" height="228">
+          </figure>
+          <figure>
+            <img src=“roc_curve.png" alt="A figure plots ROC curve with AUC of 96,15 %." width="304" height="228">
+          </figure>
+
         </div>
       </div>
     </div>
@@ -318,7 +320,10 @@ def model(self):
       <div class="row">
         <div class="col-lg-8 mx-auto">
           <h2>Contact</h2>
+          <p class="lead">Kate Hofmann</p>
           <p class="lead">+49176 8801 7477</p>
+          <a href="mailto:k8hofmann@gmail.com">e-mail</a>
+          <a href="https://de.linkedin.com/in/kate-hofmann-14b08b130" target="_blank">LinkedIn</a>
         </div>
       </div>
     </div>
