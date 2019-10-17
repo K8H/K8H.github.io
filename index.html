@@ -120,6 +120,7 @@ def simulate (self,
           <p class="lead">To train an agent to imitate animals behaviour we used reinforcement learning. RL is a computational approach, that addresses the problem of how agents should learn to take actions to maximize cumulative reward through interactions with an environment.</p>
           <pre>
             <code>
+              <small>
 def fit(self, model_type):
         """
         Initializes TRPO (trust region policy optimization) algorithm and uses
@@ -180,6 +181,7 @@ def fit(self, model_type):
         [self.log_reconstructed_trajectory(path, index) for index, path in
          enumerate(iteration_data_dict['paths'])]
         return cumulative_reward
+              </small>
             </code>
           </pre> 
           <h4>Models</h4>
@@ -187,6 +189,7 @@ def fit(self, model_type):
           <p class="lead">Three different models were implemented. A model that describes an animal approaching a goal, an animal that is avoiding an obstacle and reflexive & goal oriented model as a combination of first two. A code snippet can be found in an Appendix C.</p>
           <pre>
             <code>
+              <small>
 def next(self, x, y, x_vel, y_vel, heading, angular_vel, **_):
         """
         Method generates a next observation, based on given values, a previous 
@@ -266,6 +269,7 @@ def next(self, x, y, x_vel, y_vel, heading, angular_vel, **_):
             })
 
         return pd.Series(new_state)
+              </small>
             </code>
           </pre>
           <h5>Evaluation</h5>
@@ -289,6 +293,7 @@ def next(self, x, y, x_vel, y_vel, heading, angular_vel, **_):
 A Figure 1 shows reconstruction error for anomalous and non-anomalous data. As expected such model gives positive results (see Figure 2). An example of a model implementation:</p>
           <pre>
             <code>
+              <small>
 @property
 def model(self):
     inp_e = Input((20, 800))  # here, you don't define the batch size
@@ -305,6 +310,7 @@ def model(self):
     model = Model(encoder.inputs, decoder(encoder(encoder.inputs)))
 
     return model
+              </small>
             </code>
           </pre>
         </div>
